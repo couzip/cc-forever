@@ -8,8 +8,8 @@
     {
       "name": "cc-forever",
       "source": {
-        "source": "github",
-        "repo": "couzip/cc-forever"
+        "source": "url",
+        "url": "https://github.com/couzip/cc-forever.git"
       },
       "description": "Persistent conversation memory with semantic search for Claude Code",
       "version": "1.0.0",
