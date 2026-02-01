@@ -1,9 +1,6 @@
 {
-  "mcpServers": {
-    "cc-forever-mcp": {
-      "type": "stdio",
-      "command": "uv",
-      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}/mcp-server", "python", "server/main.py"]
-    }
+  "cc-forever-mcp": {
+    "command": "uv",
+    "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}/mcp-server", "python", "server/main.py"]
   }
 }
