@@ -1,6 +1,6 @@
 {
   "cc-forever-mcp": {
     "command": "npx",
-    "args": ["-y", "${CLAUDE_PLUGIN_ROOT}/mcp-server"]
+    "args": ["-y", "cc-forever-mcp"]
   }
 }
