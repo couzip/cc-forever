@@ -32,6 +32,7 @@ Choose your preferences:
 
 1. **Embedding Model**
    - English (default): `sentence-transformers/all-MiniLM-L6-v2` (~80MB)
+   - English (Q&A optimized): `sentence-transformers/multi-qa-MiniLM-L6-dot-v1` (~80MB)
    - Japanese: `cl-nagoya/ruri-v3-30m` (~150MB)
    - Japanese (high accuracy): `cl-nagoya/ruri-v3-130m` (~530MB)
 
@@ -67,14 +68,23 @@ Search past conversations for relevant information.
 
 ## Configuration
 
-Config file: `~/.forever/config.yml`
+CC-Forever supports two config scopes:
+
+| Scope | Config Path | Data Path | Use Case |
+|-------|-------------|-----------|----------|
+| Project-level | `./.forever/config.yml` | `./.forever/` | Project-specific memory |
+| User-level | `~/.forever/config.yml` | `~/.forever/` | Global memory across projects |
+
+**Priority:** Project-level config takes priority over user-level config.
+
+### Config File
 
 ```yaml
 embeddings:
   path: sentence-transformers/all-MiniLM-L6-v2
   content: true
 
-data_dir: ~/.forever
+data_dir: ~/.forever   # or ./.forever for project-level
 auto_index: false
 ```
 
@@ -82,11 +92,7 @@ auto_index: false
 |---------|---------|-------------|
 | `embeddings.path` | `sentence-transformers/all-MiniLM-L6-v2` | Embedding model |
 | `data_dir` | `~/.forever` | Data directory |
-| `auto_index` | `false` | Auto-index on session end |
-
-### Project-level Config
-
-You can also create `.forever/config.yml` in your project directory. Project-level config takes priority over user-level config.
+| `auto_index` | `false` | Auto-index last Q&A on session end |
 
 ## Architecture
 
