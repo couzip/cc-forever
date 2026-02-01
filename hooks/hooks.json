@@ -1,21 +1,12 @@
 {
   "hooks": {
-    "SessionStart": [
+    "Stop": [
       {
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/check-setup.py"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/auto-index.py",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/auto-index.mjs",
             "timeout": 60000
           }
         ]

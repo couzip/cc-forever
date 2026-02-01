@@ -25,6 +25,9 @@ wheels/
 venv/
 ENV/
 
+# Node.js
+node_modules/
+
 # uv
 .uv/
 

@@ -1,0 +1,29 @@
+{
+  "name": "cc-forever-mcp",
+  "version": "1.0.0",
+  "description": "CC-Forever MCP Server - Persistent conversation memory with semantic search",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "cc-forever-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.7.6",
+    "@lancedb/lancedb": "^0.22.2",
+    "@modelcontextprotocol/sdk": "^1.25.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

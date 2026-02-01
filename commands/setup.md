@@ -1,98 +1,123 @@
 ---
 description: Initial setup for CC-Forever plugin
-allowed-tools: Bash(*), Write, Read, AskUserQuestion
+allowed-tools: Bash(*), Write, Read, AskUserQuestion, mcp__cc-forever-mcp__get_stats
 ---
 
 # CC-Forever Setup
 
-Configure the CC-Forever plugin for first use.
-
 ## Steps
 
-### 1. Select Config Scope
+### 1. Detect Installation Scope
 
-Ask the user where to store config and data:
+Run this command to detect scope:
 
-**Where should CC-Forever store its configuration and data?**
+```bash
+if grep -q "cc-forever" .claude/settings.local.json 2>/dev/null; then
+  echo "SCOPE=local"
+  echo "CONFIG_DIR=./.forever"
+elif grep -q "cc-forever" .claude/settings.json 2>/dev/null; then
+  echo "SCOPE=project"
+  echo "CONFIG_DIR=./.forever"
+else
+  echo "SCOPE=user"
+  echo "CONFIG_DIR=$HOME/.forever"
+fi
+```
 
-1. **Project-level (Recommended for project-specific memory)**
-   - Config: `./.forever/config.yml`
-   - Data: `./.forever/`
-   - Memory is specific to this project
+Use the CONFIG_DIR from the output. **This is mandatory - do not skip or assume user scope.**
 
-2. **User-level (Recommended for global memory)**
-   - Config: `~/.forever/config.yml`
-   - Data: `~/.forever/`
-   - Memory is shared across all projects
+### 1.5 Check Existing Config
+
+Check if config file already exists:
+
+```bash
+if [ -f "{config_dir}/config.yml" ]; then
+  echo "EXISTS={config_dir}"
+fi
+```
+
+Replace `{config_dir}` with the actual CONFIG_DIR from step 1.
+
+If EXISTS is set, show this message and **stop** (do NOT proceed to model selection):
+
+```
+Already configured.
+
+To change the embedding model, the index must be reset.
+Delete the following folder and run /cc-forever:setup again:
+
+rm -rf {config_dir}
+```
+
+Replace `{config_dir}` with the actual path detected in step 1.
+
+**Important:** Do NOT proceed with model selection if config exists. End the setup here.
 
 ### 2. Select Embedding Model
 
-Ask the user to choose a model:
+Ask user:
 
-**Select your preferred model:**
+**Select embedding model:**
 
-1. **English (Recommended)** - `sentence-transformers/all-MiniLM-L6-v2`
-   - Size: ~80MB
-   - Lightweight and fast (txtai default)
+1. **English (Recommended)** - `Xenova/all-MiniLM-L6-v2` (~90MB)
+2. **Multilingual** - `Xenova/multilingual-e5-small` (~470MB)
+3. **Japanese (Light)** - `sirasagi62/ruri-v3-30m-ONNX` (~120MB)
+4. **Japanese (High Accuracy)** - `sirasagi62/ruri-v3-310m-ONNX` (~1.2GB)
+5. **Custom** - Enter HuggingFace model ID
 
-2. **English (Q&A Optimized)** - `sentence-transformers/multi-qa-MiniLM-L6-dot-v1`
-   - Size: ~80MB
-   - Optimized for question-answer search
+If Custom, ask for model ID.
+Models: https://huggingface.co/models?pipeline_tag=feature-extraction&library=transformers.js&sort=trending
 
-3. **Japanese** - `cl-nagoya/ruri-v3-30m`
-   - Size: ~150MB
-   - Optimized for Japanese
+### 3. Auto-Index Option
 
-4. **Japanese (High Accuracy)** - `cl-nagoya/ruri-v3-130m`
-   - Size: ~530MB
-   - Higher accuracy, larger size
+Ask user:
 
-### 3. Auto-Index Setting
+**Enable auto-indexing?**
 
-Ask if the user wants to enable auto-indexing on session end:
+When enabled, conversations are automatically indexed when Claude's response completes.
 
-- **OFF (Default)**: Manual indexing with `/cc-forever:index`
-- **ON**: Automatically save last Q&A when session ends
+1. **No (Recommended)** - Use `/cc-forever:index` to manually save conversations
+2. **Yes** - Automatically index every response (may increase latency slightly)
 
-### 4. Generate Config File
+Default: No (OFF)
 
-Based on scope selection:
+### 4. Create Config
 
-**Project-level:** Create `./.forever/config.yml`
-**User-level:** Create `~/.forever/config.yml`
+Create directory and config file at detected location:
 
-Config content:
+```bash
+mkdir -p {config_dir}
+```
+
+Write `{config_dir}/config.yml`:
 
 ```yaml
 embeddings:
   path: {selected_model}
-  content: true
-
-data_dir: {./.forever or ~/.forever}
-auto_index: false
+auto_index: {true_or_false}
 ```
 
-### 5. Create Directory
+Set `auto_index: true` only if user selected Yes in step 3. Otherwise set `auto_index: false` or omit it.
 
-```bash
-mkdir -p {selected_directory}
-```
+### 5. Download Model
+
+Call `mcp__cc-forever-mcp__get_stats` to initialize the server and download the embedding model.
+
+Tell user: "Downloading embedding model... This may take a moment on first run."
 
 ### 6. Confirmation
 
-Display completion message:
+After successful model download, show:
 
 ```
 Setup complete!
 
-Scope: {Project-level or User-level}
-Config file: {config_path}
-Data directory: {data_dir}
+Scope: {detected_scope}
+Config: {config_path}
 Model: {selected_model}
-Auto-index: {ON/OFF}
+Auto-index: {enabled/disabled}
 
 Usage:
-- /cc-forever:index     - Save recent Q&A pairs
-- /cc-forever:compact   - Summarize and save entire session
+- /cc-forever:index - Save Q&A pairs
 - /cc-forever:query <question> - Search past conversations
 ```

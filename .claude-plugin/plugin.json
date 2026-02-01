@@ -7,7 +7,7 @@
   },
   "repository": "https://github.com/couzip/cc-forever",
   "license": "Apache-2.0",
-  "keywords": ["memory", "semantic-search", "txtai", "conversation", "history"],
+  "keywords": ["memory", "semantic-search", "lancedb", "conversation", "history"],
   "commands": "./commands",
   "mcpServers": "./.mcp.json"
 }

@@ -14,22 +14,19 @@ Never lose valuable conversations again. CC-Forever lets you save and retrieve p
 
 ## Features
 
-- **Persistent Memory**: Save conversations automatically or manually
+- **Persistent Memory**: Save conversations manually or automatically
+- **Auto-Index**: Automatically save conversations when Claude responds (optional)
 - **Semantic Search**: Find relevant past conversations by meaning, not just keywords
+- **Session Compaction**: Summarize entire sessions into topic-based Q&A pairs
 - **Project or Global**: Keep memories per-project or share across all projects
-- **Cross-platform**: Works on macOS, Linux, and Windows
 
 ## Installation
 
 ```bash
-# Add marketplace
-/plugin marketplace add couzip/cc-forever
-
-# Install plugin
-/plugin install cc-forever@cc-forever-marketplace
+claude plugin add /path/to/cc-forever
 ```
 
-Restart Claude Code after installation. The first command may take a moment while dependencies are loaded.
+Restart Claude Code after installation, then run `/cc-forever:setup` to configure.
 
 ## Setup
 
@@ -37,35 +34,26 @@ Restart Claude Code after installation. The first command may take a moment whil
 /cc-forever:setup
 ```
 
-Choose your preferences:
+Choose your embedding model:
 
-1. **Embedding Model**
-   - English (default): `sentence-transformers/all-MiniLM-L6-v2` (~80MB)
-   - English (Q&A optimized): `sentence-transformers/multi-qa-MiniLM-L6-dot-v1` (~80MB)
-   - Japanese: `cl-nagoya/ruri-v3-30m` (~150MB)
-   - Japanese (high accuracy): `cl-nagoya/ruri-v3-130m` (~530MB)
+| Option | Model | Size | Use Case |
+|--------|-------|------|----------|
+| English | `Xenova/all-MiniLM-L6-v2` | ~90MB | Default, fast |
+| Multilingual | `Xenova/multilingual-e5-small` | ~470MB | Multiple languages |
+| Japanese (Light) | `sirasagi62/ruri-v3-30m-ONNX` | ~120MB | Japanese, balanced |
+| Japanese (High Accuracy) | `sirasagi62/ruri-v3-310m-ONNX` | ~1.2GB | Japanese, best quality |
 
-2. **Auto-indexing**
-   - OFF (default): Manual indexing only
-   - ON: Automatically save last Q&A on session end
+**Note:** First run downloads the embedding model. This may take a few minutes depending on model size and network speed.
 
 ## Commands
 
 ### Save Conversations
 
 ```
-/cc-forever:index
+/cc-forever:index [count]
 ```
 
-Save recent Q&A pairs to the index.
-
-### Summarize Session
-
-```
-/cc-forever:compact
-```
-
-Summarize and save the entire session by topic.
+Save recent Q&A pairs to the index. Optionally specify how many pairs to save.
 
 ### Search Past Conversations
 
@@ -73,7 +61,33 @@ Summarize and save the entire session by topic.
 /cc-forever:query <question>
 ```
 
-Search past conversations for relevant information.
+Search past conversations for relevant information using semantic search.
+
+### Summarize Session
+
+```
+/cc-forever:compact
+```
+
+Summarize and save the entire session as topic-based Q&A pairs.
+
+## Auto-Index (Optional)
+
+Enable automatic indexing to save conversations whenever Claude finishes responding.
+
+### Enable via Setup
+
+Run `/cc-forever:setup` and select "Yes" for auto-indexing.
+
+### Manual Configuration
+
+Edit your config file (`~/.forever/config.yml` or `./.forever/config.yml`):
+
+```yaml
+auto_index: true
+```
+
+When enabled, the last Q&A pair is automatically indexed after each Claude response.
 
 ## Configuration
 
@@ -86,67 +100,92 @@ CC-Forever supports two config scopes:
 
 **Priority:** Project-level config takes priority over user-level config.
 
-### Config File
+### Config Options
 
 ```yaml
 embeddings:
-  path: sentence-transformers/all-MiniLM-L6-v2
-  content: true
+  path: Xenova/all-MiniLM-L6-v2
 
-data_dir: ~/.forever   # or ./.forever for project-level
 auto_index: false
 ```
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `embeddings.path` | `sentence-transformers/all-MiniLM-L6-v2` | Embedding model |
-| `data_dir` | `~/.forever` | Data directory |
-| `auto_index` | `false` | Auto-index last Q&A on session end |
+| `embeddings.path` | `Xenova/all-MiniLM-L6-v2` | Embedding model from HuggingFace |
+| `auto_index` | `false` | Auto-save conversations on Claude response |
 
 ## Architecture
 
 ```
 Claude Code Session
         │
-        ├── /cc-forever:index  ──► MCP Server ──► txtai
-        ├── /cc-forever:query  ──► MCP Server ──► txtai
+        ├── /cc-forever:index   ──► Skill ──► MCP Server ──► LanceDB
+        ├── /cc-forever:query   ──► Skill ──► MCP Server ──► LanceDB
+        ├── /cc-forever:compact ──► Skill ──► MCP Server ──► LanceDB
         │
-        └── [Session End] (if auto_index: true)
-                │
-                └── SessionEnd Hook ──► auto-index.py ──► txtai
+        └── [Stop Hook] ──► auto-index.mjs ──► LanceDB (if auto_index: true)
 ```
 
 ### Tech Stack
 
-- **[txtai](https://github.com/neuml/txtai)**: Embeddings and semantic search
+- **[LanceDB](https://lancedb.com/)**: Vector database (file-based, no server needed)
+- **[Transformers.js](https://huggingface.co/docs/transformers.js)**: Local embeddings via ONNX
 - **[MCP](https://modelcontextprotocol.io/)**: Model Context Protocol for Claude Code integration
-- **[Faiss](https://github.com/facebookresearch/faiss)**: Vector index
-- **SQLite**: Metadata storage
 
 ## Development
 
 ### Prerequisites
 
-- Python 3.10+
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+- Node.js 20+
+- npm
 
-### Running locally
+### Project Structure
+
+```
+cc-forever/
+├── .claude-plugin/
+│   └── plugin.json
+├── commands/           # Slash commands
+├── skills/             # Skill implementations
+├── hooks/
+│   └── hooks.json      # Stop hook for auto-index
+├── scripts/
+│   └── auto-index.mjs  # Auto-index script
+└── mcp-server/         # MCP server with LanceDB
+```
+
+### Running Locally
 
 ```bash
 # Install dependencies
 cd mcp-server
-uv sync
+npm install
 
-# Run MCP server
-uv run python server/main.py
+# Build
+npm run build
+
+# Test with Claude Code
+claude --plugin-dir /path/to/cc-forever
+```
+
+### Debug Mode
+
+```bash
+# Enable debug logging
+CC_FOREVER_DEBUG=1 claude --plugin-dir /path/to/cc-forever
+
+# Or use Claude's debug mode
+claude --debug --plugin-dir /path/to/cc-forever
 ```
 
 ## License
 
 Apache License 2.0
 
+See [LICENSE](LICENSE) and [NOTICE](NOTICE) for details.
+
 ## Acknowledgments
 
-- [txtai](https://github.com/neuml/txtai) - Embedding database
-- [txtai-assistant-mcp](https://github.com/rmtech1/txtai-assistant-mcp) - MCP server reference
-- [ruri-v3](https://huggingface.co/cl-nagoya/ruri-v3-30m) - Japanese embedding model
+- [mcp-local-rag](https://github.com/shinpr/mcp-local-rag) - Architecture and implementation reference (MIT License)
+- [LanceDB](https://lancedb.com/) - Vector database
+- [Transformers.js](https://huggingface.co/docs/transformers.js) - Local embeddings
