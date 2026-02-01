@@ -2,6 +2,8 @@
 
 # CC-Forever
 
+A [Claude Code](https://claude.ai/code) plugin for persistent conversation memory.
+
 **Give Claude Code a persistent memory — 100% local, 100% free.**
 
 Never lose valuable conversations again. CC-Forever lets you save and retrieve past conversations with Claude Code using semantic search. Ask "How did I implement authentication last month?" and instantly get relevant context from your conversation history.
