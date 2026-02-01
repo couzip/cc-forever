@@ -16,7 +16,8 @@ import yaml
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
-from txtai import Embeddings
+
+# Note: txtai is imported lazily in init_embeddings() to avoid slow startup
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from chunker import chunk_conversation
@@ -78,8 +79,11 @@ def get_index_path() -> Path:
 
 
 def init_embeddings():
-    """Initialize embeddings"""
+    """Initialize embeddings (lazy load txtai here)"""
     global embeddings, config, data_dir
+
+    # Lazy import to avoid slow startup
+    from txtai import Embeddings
 
     config = load_config()
     data_dir = get_data_dir()
