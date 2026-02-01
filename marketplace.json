@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "cc-forever",
-      "source": "..",
+      "source": ".",
       "description": "Persistent conversation memory with semantic search for Claude Code",
       "version": "1.0.0",
       "author": {
