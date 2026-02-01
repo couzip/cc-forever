@@ -7,7 +7,10 @@
   "plugins": [
     {
       "name": "cc-forever",
-      "source": ".",
+      "source": {
+        "source": "github",
+        "repo": "couzip/cc-forever"
+      },
       "description": "Persistent conversation memory with semantic search for Claude Code",
       "version": "1.0.0",
       "author": {
