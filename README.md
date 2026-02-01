@@ -43,6 +43,8 @@ Choose your embedding model:
 | Japanese (Light) | `sirasagi62/ruri-v3-30m-ONNX` | ~120MB | Japanese, balanced |
 | Japanese (High Accuracy) | `sirasagi62/ruri-v3-310m-ONNX` | ~1.2GB | Japanese, best quality |
 
+**Custom Models:** You can use any [Transformers.js compatible model](https://huggingface.co/models?library=transformers.js&pipeline_tag=feature-extraction) from HuggingFace. Models must support the `feature-extraction` pipeline and have ONNX weights for Transformers.js.
+
 **Note:** First run downloads the embedding model. This may take a few minutes depending on model size and network speed.
 
 ## Commands
