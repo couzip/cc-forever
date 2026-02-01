@@ -77,6 +77,8 @@ Summarize and save the entire session as topic-based Q&A pairs.
 
 Enable automatic indexing to save conversations whenever Claude finishes responding.
 
+**Warning:** Auto-index saves every Q&A pair, which can cause the database to grow quickly. Consider using manual `/cc-forever:index` or `/cc-forever:compact` for better control over what gets saved.
+
 ### Enable via Setup
 
 Run `/cc-forever:setup` and select "Yes" for auto-indexing.
