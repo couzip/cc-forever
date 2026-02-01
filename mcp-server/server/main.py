@@ -209,108 +209,160 @@ async def store_memory(content: str, project: str = None, tags: list = None, chu
     """Store conversation in index"""
     global embeddings
 
-    timestamp = datetime.now().isoformat()
-
-    if chunk:
-        chunks = chunk_conversation(content)
-    else:
-        chunks = [{
-            "id": f"{timestamp}-0",
-            "text": content,
-            "question": content[:200]
-        }]
-
-    if not chunks:
+    # Input validation
+    if not content or not content.strip():
         return [TextContent(type="text", text=json.dumps({
             "success": False,
-            "error": "No valid Q&A pairs found in content"
+            "error": "Content cannot be empty"
         }))]
 
-    # Add metadata
-    documents = []
-    for i, c in enumerate(chunks):
-        doc_id = c.get("id", f"{timestamp}-{i}")
-        doc = {
-            "text": c["text"],
-            "question": c.get("question", ""),
-            "timestamp": timestamp,
-            "project": project or "default",
-            "tags": ",".join(tags) if tags else "conversation"
-        }
-        documents.append((doc_id, doc, None))
+    if len(content) > 100000:  # 100KB limit
+        return [TextContent(type="text", text=json.dumps({
+            "success": False,
+            "error": "Content too large (max 100KB)"
+        }))]
 
-    # Add to index
-    embeddings.upsert(documents)
+    try:
+        timestamp = datetime.now().isoformat()
 
-    # Save index
-    index_path = get_index_path()
-    embeddings.save(str(index_path))
+        if chunk:
+            chunks = chunk_conversation(content)
+        else:
+            chunks = [{
+                "id": f"{timestamp}-0",
+                "text": content,
+                "question": content[:200]
+            }]
 
-    return [TextContent(type="text", text=json.dumps({
-        "success": True,
-        "chunks_stored": len(chunks),
-        "timestamp": timestamp
-    }))]
+        if not chunks:
+            return [TextContent(type="text", text=json.dumps({
+                "success": False,
+                "error": "No valid Q&A pairs found in content. Format: 'Human: <question>\\nAssistant: <answer>'"
+            }))]
+
+        # Add metadata
+        documents = []
+        for i, c in enumerate(chunks):
+            doc_id = c.get("id", f"{timestamp}-{i}")
+            doc = {
+                "text": c["text"],
+                "question": c.get("question", ""),
+                "timestamp": timestamp,
+                "project": project or "default",
+                "tags": ",".join(tags) if tags else "conversation"
+            }
+            documents.append((doc_id, doc, None))
+
+        # Add to index
+        embeddings.upsert(documents)
+
+        # Save index
+        index_path = get_index_path()
+        embeddings.save(str(index_path))
+
+        return [TextContent(type="text", text=json.dumps({
+            "success": True,
+            "chunks_stored": len(chunks),
+            "timestamp": timestamp
+        }))]
+
+    except Exception as e:
+        return [TextContent(type="text", text=json.dumps({
+            "success": False,
+            "error": f"Failed to store memory: {str(e)}"
+        }))]
 
 
 async def retrieve_memory(query: str, n_results: int = 5, threshold: float = 0.3, project: str = None):
     """Semantic search"""
     global embeddings
 
-    if embeddings is None or embeddings.count() == 0:
+    # Input validation
+    if not query or not query.strip():
         return [TextContent(type="text", text=json.dumps({
-            "results": [],
-            "message": "No memories indexed yet"
+            "success": False,
+            "error": "Query cannot be empty"
         }))]
 
-    # Execute search
-    results = embeddings.search(query, limit=n_results * 2)  # Get extra for filtering
+    if len(query) > 10000:  # 10KB limit
+        return [TextContent(type="text", text=json.dumps({
+            "success": False,
+            "error": "Query too long (max 10KB)"
+        }))]
 
-    formatted = []
-    for r in results:
-        score = r.get("score", 0)
-        if score < threshold:
-            continue
+    # Sanitize parameters
+    n_results = min(max(int(n_results), 1), 100)  # 1-100
+    threshold = max(0.0, min(float(threshold), 1.0))  # 0.0-1.0
 
-        # Project filter
-        if project and r.get("project") != project:
-            continue
+    try:
+        if embeddings is None or embeddings.count() == 0:
+            return [TextContent(type="text", text=json.dumps({
+                "results": [],
+                "message": "No memories indexed yet"
+            }))]
 
-        formatted.append({
-            "score": round(score, 4),
-            "question": r.get("question", ""),
-            "text": r.get("text", ""),
-            "timestamp": r.get("timestamp", ""),
-            "project": r.get("project", ""),
-            "tags": r.get("tags", "")
-        })
+        # Execute search
+        results = embeddings.search(query, limit=n_results * 2)  # Get extra for filtering
 
-        if len(formatted) >= n_results:
-            break
+        formatted = []
+        for r in results:
+            score = r.get("score", 0)
+            if score < threshold:
+                continue
 
-    return [TextContent(type="text", text=json.dumps({
-        "results": formatted,
-        "query": query,
-        "total_found": len(formatted)
-    }))]
+            # Project filter
+            if project and r.get("project") != project:
+                continue
+
+            formatted.append({
+                "score": round(score, 4),
+                "question": r.get("question", ""),
+                "text": r.get("text", ""),
+                "timestamp": r.get("timestamp", ""),
+                "project": r.get("project", ""),
+                "tags": r.get("tags", "")
+            })
+
+            if len(formatted) >= n_results:
+                break
+
+        return [TextContent(type="text", text=json.dumps({
+            "results": formatted,
+            "query": query,
+            "total_found": len(formatted)
+        }))]
+
+    except Exception as e:
+        return [TextContent(type="text", text=json.dumps({
+            "success": False,
+            "error": f"Failed to retrieve memory: {str(e)}"
+        }))]
 
 
 async def get_stats():
     """Get index statistics"""
     global embeddings, config, config_source
 
-    if embeddings is None:
-        init_embeddings()
+    try:
+        if embeddings is None:
+            init_embeddings()
 
-    count = embeddings.count() if embeddings else 0
+        count = embeddings.count() if embeddings else 0
 
-    return [TextContent(type="text", text=json.dumps({
-        "total_chunks": count,
-        "model": config.get("embeddings", {}).get("path", "unknown"),
-        "data_dir": str(get_data_dir()),
-        "index_exists": get_index_path().exists(),
-        "config_source": config_source
-    }))]
+        return [TextContent(type="text", text=json.dumps({
+            "success": True,
+            "total_chunks": count,
+            "model": config.get("embeddings", {}).get("path", "unknown"),
+            "data_dir": str(get_data_dir()),
+            "index_exists": get_index_path().exists(),
+            "config_source": config_source
+        }))]
+
+    except Exception as e:
+        return [TextContent(type="text", text=json.dumps({
+            "success": False,
+            "error": f"Failed to get stats: {str(e)}"
+        }))]
 
 
 async def main():
