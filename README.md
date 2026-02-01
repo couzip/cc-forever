@@ -27,7 +27,11 @@ Never lose valuable conversations again. CC-Forever lets you save and retrieve p
 ## Installation
 
 ```bash
-claude plugin add /path/to/cc-forever
+# Add marketplace
+/plugin marketplace add couzip/cc-forever
+
+# Install plugin
+/plugin install cc-forever@cc-forever-marketplace
 ```
 
 Restart Claude Code after installation, then run `/cc-forever:setup` to configure.
