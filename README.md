@@ -2,7 +2,7 @@
 
 # CC-Forever
 
-A [Claude Code Plugin](https://code.claude.com/docs/en/plugins) for persistent conversation memory.
+A [Claude Code Plugins](https://code.claude.com/docs/en/plugins) for persistent conversation memory.
 
 **Give Claude Code a persistent memory — 100% local, 100% free.**
 
