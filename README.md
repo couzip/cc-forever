@@ -1,3 +1,5 @@
+![CC-Forever](assets/header.png)
+
 # CC-Forever
 
 **Give Claude Code a persistent memory — 100% local, 100% free.**
