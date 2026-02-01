@@ -27,10 +27,9 @@ Never lose valuable conversations again. CC-Forever lets you save and retrieve p
 
 # Install plugin
 /plugin install cc-forever@cc-forever-marketplace
-
-# Or install directly from local directory
-claude --plugin-dir /path/to/cc-forever
 ```
+
+Restart Claude Code after installation. The first command may take a moment while dependencies are loaded.
 
 ## Setup
 
