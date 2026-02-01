@@ -1,0 +1,54 @@
+{
+  "manifest_version": "0.4",
+  "name": "cc-forever",
+  "display_name": "CC-Forever",
+  "version": "1.0.0",
+  "description": "Persistent conversation memory with semantic search for Claude Code",
+  "long_description": "Give Claude Code a persistent memory — 100% local, 100% free. Never lose valuable conversations again. Save and retrieve past conversations using semantic search powered by txtai.",
+  "author": {
+    "name": "Koji Hayashida",
+    "url": "https://github.com/couzip"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/couzip/cc-forever"
+  },
+  "license": "Apache-2.0",
+  "server": {
+    "type": "uv",
+    "entry_point": "server/main.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${__dirname}", "python", "server/main.py"]
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.10"
+    }
+  },
+  "tools": [
+    {
+      "name": "store_memory",
+      "description": "Store conversation in the index. Chunks content into Q&A pairs."
+    },
+    {
+      "name": "retrieve_memory",
+      "description": "Search past conversations using semantic search"
+    },
+    {
+      "name": "get_stats",
+      "description": "Get index statistics and configuration info"
+    }
+  ],
+  "user_config": {
+    "data_dir": {
+      "type": "directory",
+      "title": "Data Directory",
+      "description": "Where to store conversation index",
+      "default": "~/.forever"
+    }
+  },
+  "keywords": ["memory", "semantic-search", "txtai", "conversation", "history", "embeddings"]
+}

@@ -112,13 +112,13 @@ async def list_tools():
     return [
         Tool(
             name="store_memory",
-            description="Store conversation in the index. Chunks content into Q&A pairs.",
+            description="Store Q&A conversation pairs in the memory index. Content MUST include both Human question AND Assistant answer. Example format: 'Human: How do I use OAuth?\\nAssistant: OAuth is an authentication protocol...'",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "content": {
                         "type": "string",
-                        "description": "Conversation content in Human/Assistant format"
+                        "description": "Conversation in 'Human: <question>\\nAssistant: <answer>' format. MUST include both Human and Assistant parts."
                     },
                     "project": {
                         "type": "string",
