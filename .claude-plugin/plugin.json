@@ -1,0 +1,13 @@
+{
+  "name": "cc-forever",
+  "version": "1.0.0",
+  "description": "Persistent conversation memory with semantic search for Claude Code",
+  "author": {
+    "name": "Koji Hayashida"
+  },
+  "repository": "https://github.com/couzip/cc-forever",
+  "license": "Apache-2.0",
+  "keywords": ["memory", "semantic-search", "txtai", "conversation", "history"],
+  "commands": "./commands",
+  "mcpServers": "./.mcp.json"
+}

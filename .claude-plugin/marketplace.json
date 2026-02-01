@@ -1,0 +1,20 @@
+{
+  "name": "cc-forever-marketplace",
+  "owner": {
+    "name": "Koji Hayashida",
+    "email": "couzip@example.com"
+  },
+  "plugins": [
+    {
+      "name": "cc-forever",
+      "source": "..",
+      "description": "Persistent conversation memory with semantic search for Claude Code",
+      "version": "1.0.0",
+      "author": {
+        "name": "Koji Hayashida"
+      },
+      "repository": "https://github.com/couzip/cc-forever",
+      "license": "Apache-2.0"
+    }
+  ]
+}
