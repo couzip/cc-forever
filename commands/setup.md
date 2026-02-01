@@ -26,7 +26,7 @@ fi
 
 Use the CONFIG_DIR from the output. **This is mandatory - do not skip or assume user scope.**
 
-### 1.5 Check Existing Config
+### 2. Check Existing Config
 
 Check if config file already exists:
 
@@ -53,7 +53,7 @@ Replace `{config_dir}` with the actual path detected in step 1.
 
 **Important:** Do NOT proceed with model selection if config exists. End the setup here.
 
-### 2. Select Embedding Model
+### 3. Select Embedding Model
 
 Ask user:
 
@@ -66,9 +66,9 @@ Ask user:
 5. **Custom** - Enter HuggingFace model ID
 
 If Custom, ask for model ID.
-Models: https://huggingface.co/models?pipeline_tag=feature-extraction&library=transformers.js&sort=trending
+Models: https://huggingface.co/models?library=transformers.js&pipeline_tag=feature-extraction
 
-### 3. Auto-Index Option
+### 4. Auto-Index Option
 
 Ask user:
 
@@ -81,7 +81,7 @@ When enabled, conversations are automatically indexed when Claude's response com
 
 Default: No (OFF)
 
-### 4. Create Config
+### 5. Create Config
 
 Create directory and config file at detected location:
 
@@ -97,15 +97,15 @@ embeddings:
 auto_index: {true_or_false}
 ```
 
-Set `auto_index: true` only if user selected Yes in step 3. Otherwise set `auto_index: false` or omit it.
+Set `auto_index: true` only if user selected Yes in step 4. Otherwise set `auto_index: false` or omit it.
 
-### 5. Download Model
+### 6. Download Model
 
 Call `mcp__cc-forever-mcp__get_stats` to initialize the server and download the embedding model.
 
 Tell user: "Downloading embedding model... This may take a moment on first run."
 
-### 6. Confirmation
+### 7. Confirmation
 
 After successful model download, show:
 

@@ -20,7 +20,6 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, basename } from 'node:path'
-import { homedir } from 'node:os'
 
 // Get script directory for relative imports
 const __filename = fileURLToPath(import.meta.url)
