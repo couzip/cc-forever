@@ -21,14 +21,37 @@ import { readFileSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, basename } from 'node:path'
 
-// Get script directory for relative imports
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+// Import from npm package (installed via npx cc-forever-mcp)
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
 
-// Import from mcp-server dist
-const { loadConfig, getDataDir } = await import(join(__dirname, '../mcp-server/dist/config.js'))
-const { Embedder } = await import(join(__dirname, '../mcp-server/dist/embedder.js'))
-const { VectorStore } = await import(join(__dirname, '../mcp-server/dist/vectorstore.js'))
+// Resolve from global npx cache
+let loadConfig, getDataDir, Embedder, VectorStore
+
+try {
+  // Try importing from npm package
+  const configModule = await import('cc-forever-mcp/dist/config.js')
+  const embedderModule = await import('cc-forever-mcp/dist/embedder.js')
+  const vectorstoreModule = await import('cc-forever-mcp/dist/vectorstore.js')
+
+  loadConfig = configModule.loadConfig
+  getDataDir = configModule.getDataDir
+  Embedder = embedderModule.Embedder
+  VectorStore = vectorstoreModule.VectorStore
+} catch (e) {
+  // Fallback: try local mcp-server/dist (for development)
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = dirname(__filename)
+
+  const configModule = await import(join(__dirname, '../mcp-server/dist/config.js'))
+  const embedderModule = await import(join(__dirname, '../mcp-server/dist/embedder.js'))
+  const vectorstoreModule = await import(join(__dirname, '../mcp-server/dist/vectorstore.js'))
+
+  loadConfig = configModule.loadConfig
+  getDataDir = configModule.getDataDir
+  Embedder = embedderModule.Embedder
+  VectorStore = vectorstoreModule.VectorStore
+}
 
 /**
  * Read JSON from stdin
