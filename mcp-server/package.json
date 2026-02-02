@@ -1,6 +1,6 @@
 {
   "name": "cc-forever-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CC-Forever MCP Server - Persistent conversation memory with semantic search",
   "type": "module",
   "main": "dist/index.js",

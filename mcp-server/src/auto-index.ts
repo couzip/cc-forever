@@ -1,70 +1,56 @@
 #!/usr/bin/env node
 /**
- * Auto-index script for Stop hook
+ * Auto-index CLI for Stop hook
  *
  * Automatically indexes the last Q&A pair when Claude's response completes.
+ *
+ * Usage: npx cc-forever-mcp auto-index
  *
  * Input (stdin JSON):
  * - session_id: string
  * - transcript_path: string
  * - cwd: string
  * - stop_hook_active: boolean (true if this is a Stop hook response)
- *
- * Behavior:
- * - If stop_hook_active is true, exit immediately (prevent infinite loop)
- * - If auto_index is not true in config, exit immediately (default OFF)
- * - Extract the last Q&A pair from transcript
- * - Generate embedding and save to LanceDB
  */
 
 import { readFileSync, existsSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { dirname, join, basename } from 'node:path'
+import { join, basename } from 'node:path'
+import { loadConfig, getDataDir } from './config.js'
+import { Embedder } from './embedder.js'
+import { VectorStore } from './vectorstore.js'
 
-// Import from npm package (installed via npx cc-forever-mcp)
-import { createRequire } from 'node:module'
-const require = createRequire(import.meta.url)
+interface HookInput {
+  session_id?: string
+  transcript_path?: string
+  cwd?: string
+  stop_hook_active?: boolean
+}
 
-// Resolve from global npx cache
-let loadConfig, getDataDir, Embedder, VectorStore
+interface Message {
+  type: string
+  message?: {
+    role?: string
+    content?: string | Array<{ type: string; text?: string }>
+  }
+}
 
-try {
-  // Try importing from npm package
-  const configModule = await import('cc-forever-mcp/dist/config.js')
-  const embedderModule = await import('cc-forever-mcp/dist/embedder.js')
-  const vectorstoreModule = await import('cc-forever-mcp/dist/vectorstore.js')
-
-  loadConfig = configModule.loadConfig
-  getDataDir = configModule.getDataDir
-  Embedder = embedderModule.Embedder
-  VectorStore = vectorstoreModule.VectorStore
-} catch (e) {
-  // Fallback: try local mcp-server/dist (for development)
-  const __filename = fileURLToPath(import.meta.url)
-  const __dirname = dirname(__filename)
-
-  const configModule = await import(join(__dirname, '../mcp-server/dist/config.js'))
-  const embedderModule = await import(join(__dirname, '../mcp-server/dist/embedder.js'))
-  const vectorstoreModule = await import(join(__dirname, '../mcp-server/dist/vectorstore.js'))
-
-  loadConfig = configModule.loadConfig
-  getDataDir = configModule.getDataDir
-  Embedder = embedderModule.Embedder
-  VectorStore = vectorstoreModule.VectorStore
+interface QAPair {
+  question: string
+  text: string
 }
 
 /**
  * Read JSON from stdin
  */
-async function readStdin() {
+async function readStdin(): Promise<HookInput> {
   return new Promise((resolve, reject) => {
     let data = ''
     process.stdin.setEncoding('utf8')
-    process.stdin.on('data', chunk => { data += chunk })
+    process.stdin.on('data', (chunk: string) => { data += chunk })
     process.stdin.on('end', () => {
       try {
         resolve(JSON.parse(data))
-      } catch (e) {
+      } catch {
         reject(new Error('Invalid JSON input'))
       }
     })
@@ -75,19 +61,19 @@ async function readStdin() {
 /**
  * Read JSONL transcript file and extract messages
  */
-function readTranscript(transcriptPath) {
+function readTranscript(transcriptPath: string): Message[] {
   if (!existsSync(transcriptPath)) {
     return []
   }
 
   const content = readFileSync(transcriptPath, 'utf-8')
-  const messages = []
+  const messages: Message[] = []
 
   for (const line of content.split('\n')) {
     if (!line.trim()) continue
     try {
       messages.push(JSON.parse(line))
-    } catch (e) {
+    } catch {
       // Skip invalid JSON lines
     }
   }
@@ -98,7 +84,7 @@ function readTranscript(transcriptPath) {
 /**
  * Extract text content from message.content array
  */
-function extractTextContent(content) {
+function extractTextContent(content: string | Array<{ type: string; text?: string }> | undefined): string {
   if (!content) return ''
 
   if (typeof content === 'string') return content
@@ -115,25 +101,14 @@ function extractTextContent(content) {
 
 /**
  * Extract the last Q&A pair from messages
- *
- * Transcript JSONL structure:
- * {
- *   "type": "user" | "assistant",
- *   "message": {
- *     "role": "user" | "assistant",
- *     "content": [{"type": "text", "text": "..."}]
- *   },
- *   "uuid": "...",
- *   "timestamp": "..."
- * }
  */
-function extractLastQAPair(messages) {
-  // Filter to only user/assistant messages (skip file-history-snapshot, etc.)
+function extractLastQAPair(messages: Message[]): QAPair | null {
+  // Filter to only user/assistant messages
   const conversationMessages = messages.filter(msg =>
     msg.type === 'user' || msg.type === 'assistant'
   )
 
-  // Find the last user message with actual text content (not tool results)
+  // Find the last user message with actual text content
   let lastUserIndex = -1
   let lastUserContent = ''
 
@@ -142,7 +117,6 @@ function extractLastQAPair(messages) {
 
     if (msg.type === 'user') {
       const content = extractTextContent(msg.message?.content)
-      // Skip tool_result messages and empty messages
       if (content && !content.includes('[Request interrupted')) {
         lastUserIndex = i
         lastUserContent = content
@@ -167,7 +141,6 @@ function extractLastQAPair(messages) {
         assistantContent += content + '\n'
       }
     } else if (msg.type === 'user') {
-      // Stop at next user message
       break
     }
   }
@@ -193,7 +166,7 @@ function extractLastQAPair(messages) {
 /**
  * Main function
  */
-async function main() {
+async function main(): Promise<void> {
   const DEBUG = process.env.CC_FOREVER_DEBUG === '1'
 
   try {
@@ -288,7 +261,7 @@ async function main() {
 
   } catch (error) {
     // Log error but don't fail the hook
-    console.error(`[cc-forever] Auto-index error: ${error.message}`)
+    console.error(`[cc-forever] Auto-index error: ${(error as Error).message}`)
   }
 }
 

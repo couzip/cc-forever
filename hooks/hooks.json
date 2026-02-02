@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/auto-index.mjs",
+            "command": "npx -y cc-forever-mcp auto-index",
             "timeout": 60000
           }
         ]

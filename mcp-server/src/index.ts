@@ -345,6 +345,16 @@ class CCForeverServer {
 // ============================================
 
 async function main(): Promise<void> {
+  // Check for subcommand
+  const command = process.argv[2]
+
+  if (command === 'auto-index') {
+    // Run auto-index CLI
+    await import('./auto-index.js')
+    return
+  }
+
+  // Default: run MCP server
   try {
     const server = new CCForeverServer()
     await server.run()
