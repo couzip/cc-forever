@@ -81,6 +81,29 @@ Search past conversations for relevant information using semantic search.
 
 Summarize and save the entire session as topic-based Q&A pairs.
 
+### Delete Memories
+
+```
+/cc-forever:delete <option>
+```
+
+Delete memories from the index. Options:
+
+| Option | Description |
+|--------|-------------|
+| `all` | Delete all memories |
+| `project:<name>` | Delete all memories for a specific project |
+| `before:<timestamp>` | Delete memories before an ISO timestamp |
+| `<id1> <id2> ...` | Delete specific memory IDs |
+
+Examples:
+```
+/cc-forever:delete all
+/cc-forever:delete project:my-app
+/cc-forever:delete before:2025-01-01T00:00:00Z
+/cc-forever:delete 2025-01-15T10:30:00.000Z-0
+```
+
 ## Auto-Index (Optional)
 
 Enable automatic indexing to save conversations whenever Claude finishes responding.
@@ -134,6 +157,7 @@ Claude Code Session
         ├── /cc-forever:index   ──► Skill ──► MCP Server ──► LanceDB
         ├── /cc-forever:query   ──► Skill ──► MCP Server ──► LanceDB
         ├── /cc-forever:compact ──► Skill ──► MCP Server ──► LanceDB
+        ├── /cc-forever:delete  ──► Skill ──► MCP Server ──► LanceDB
         │
         └── [Stop Hook] ──► auto-index.mjs ──► LanceDB (if auto_index: true)
 ```

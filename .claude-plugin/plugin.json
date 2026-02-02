@@ -1,6 +1,6 @@
 {
   "name": "cc-forever",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "Persistent conversation memory with semantic search for Claude Code",
   "author": {
     "name": "Koji Hayashida"
@@ -9,5 +9,6 @@
   "license": "Apache-2.0",
   "keywords": ["memory", "semantic-search", "lancedb", "conversation", "history"],
   "commands": "./commands",
+  "skills": "./skills",
   "mcpServers": "./.mcp.json"
 }

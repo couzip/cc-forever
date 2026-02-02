@@ -24,6 +24,7 @@ export interface MemoryChunk {
 }
 
 export interface SearchResult {
+  id: string
   text: string
   question: string
   score: number
@@ -96,6 +97,7 @@ export class VectorStore {
         .toArray()
 
       return results.map((r) => ({
+        id: r.id as string,
         text: r.text as string,
         question: r.question as string,
         score: (r._distance as number) ?? 0,
@@ -118,6 +120,38 @@ export class VectorStore {
       return { chunkCount: allRecords.length }
     } catch (error) {
       return { chunkCount: 0 }
+    }
+  }
+
+  async deleteChunks(predicate: string): Promise<number> {
+    if (!this.table) {
+      throw new Error('Table not initialized')
+    }
+
+    try {
+      const beforeCount = (await this.table.query().toArray()).length
+      await this.table.delete(predicate)
+      const afterCount = (await this.table.query().toArray()).length
+      const deletedCount = beforeCount - afterCount
+      console.error(`VectorStore: Deleted ${deletedCount} chunks`)
+      return deletedCount
+    } catch (error) {
+      throw new Error(`Failed to delete chunks: ${(error as Error).message}`)
+    }
+  }
+
+  async deleteAll(): Promise<number> {
+    if (!this.table) {
+      return 0
+    }
+
+    try {
+      const beforeCount = (await this.table.query().toArray()).length
+      await this.table.delete('id IS NOT NULL')
+      console.error(`VectorStore: Deleted all ${beforeCount} chunks`)
+      return beforeCount
+    } catch (error) {
+      throw new Error(`Failed to delete all chunks: ${(error as Error).message}`)
     }
   }
 }

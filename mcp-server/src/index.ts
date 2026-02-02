@@ -35,6 +35,13 @@ interface RetrieveMemoryArgs {
   project?: string
 }
 
+interface DeleteMemoryArgs {
+  ids?: string[]
+  project?: string
+  before?: string
+  all?: boolean
+}
+
 // ============================================
 // Main Server
 // ============================================
@@ -125,6 +132,32 @@ class CCForeverServer {
             properties: {},
           },
         },
+        {
+          name: 'delete_memory',
+          description: 'Delete memories from the index. Supports deletion by IDs, project, timestamp, or all.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              ids: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Delete by specific IDs',
+              },
+              project: {
+                type: 'string',
+                description: 'Delete all memories for a project',
+              },
+              before: {
+                type: 'string',
+                description: 'Delete memories before this ISO timestamp (e.g., 2025-01-01T00:00:00Z)',
+              },
+              all: {
+                type: 'boolean',
+                description: 'Delete ALL memories (use with caution)',
+              },
+            },
+          },
+        },
       ],
     }))
 
@@ -145,6 +178,8 @@ class CCForeverServer {
             return await this.retrieveMemory(args as unknown as RetrieveMemoryArgs)
           case 'get_stats':
             return await this.getStats()
+          case 'delete_memory':
+            return await this.deleteMemory(args as unknown as DeleteMemoryArgs)
           default:
             return {
               content: [{ type: 'text', text: JSON.stringify({ success: false, error: `Unknown tool: ${name}` }) }],
@@ -292,6 +327,7 @@ class CCForeverServer {
       })
       .slice(0, n_results)
       .map((r) => ({
+        id: r.id,
         score: Math.round((1 - r.score) * 10000) / 10000,
         question: r.question,
         text: r.text,
@@ -330,6 +366,74 @@ class CCForeverServer {
           }),
         },
       ],
+    }
+  }
+
+  private async deleteMemory(args: DeleteMemoryArgs): Promise<{ content: { type: string; text: string }[] }> {
+    const { ids, project, before, all } = args
+
+    // Validate: at least one deletion criteria must be specified
+    if (!ids && !project && !before && !all) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              success: false,
+              error: 'At least one deletion criteria must be specified: ids, project, before, or all',
+            }),
+          },
+        ],
+      }
+    }
+
+    try {
+      let deletedCount = 0
+
+      if (all === true) {
+        // Delete all memories
+        deletedCount = await this.vectorStore!.deleteAll()
+      } else if (ids && ids.length > 0) {
+        // Delete by specific IDs
+        const escapedIds = ids.map((id) => `'${id.replace(/'/g, "''")}'`).join(', ')
+        const predicate = `id IN (${escapedIds})`
+        deletedCount = await this.vectorStore!.deleteChunks(predicate)
+      } else if (project) {
+        // Delete by project
+        const escapedProject = project.replace(/'/g, "''")
+        const predicate = `project = '${escapedProject}'`
+        deletedCount = await this.vectorStore!.deleteChunks(predicate)
+      } else if (before) {
+        // Delete by timestamp
+        const escapedBefore = before.replace(/'/g, "''")
+        const predicate = `timestamp < '${escapedBefore}'`
+        deletedCount = await this.vectorStore!.deleteChunks(predicate)
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              success: true,
+              deleted_count: deletedCount,
+              criteria: { ids, project, before, all },
+            }),
+          },
+        ],
+      }
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              success: false,
+              error: `Failed to delete memories: ${(error as Error).message}`,
+            }),
+          },
+        ],
+      }
     }
   }
 
