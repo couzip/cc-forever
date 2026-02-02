@@ -46,10 +46,13 @@ Already configured.
 To change the embedding model, the index must be reset.
 Delete the following folder and run /cc-forever:setup again:
 
-rm -rf {config_dir}
+{config_dir}
+
+macOS/Linux: rm -rf {config_dir}
+Windows:     rmdir /s /q {config_dir}
 ```
 
-Replace `{config_dir}` with the actual path detected in step 1.
+Replace `{config_dir}` with the **full absolute path** detected in step 1 (e.g., `/Users/john/.forever` on macOS/Linux, `C:\Users\john\.forever` on Windows).
 
 **Important:** Do NOT proceed with model selection if config exists. End the setup here.
 

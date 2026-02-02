@@ -104,7 +104,11 @@ function parseValue(value: string): string | boolean | number {
  */
 export function getDataDir(config: Config): string {
   const dir = config.data_dir || path.join(os.homedir(), '.forever')
-  const expanded = dir.startsWith('~') ? dir.replace('~', os.homedir()) : dir
+  const expanded = dir.startsWith('~/')
+    ? path.join(os.homedir(), dir.slice(2))  // Skip '~/'
+    : dir.startsWith('~')
+      ? os.homedir()  // Just '~'
+      : dir
 
   if (!fs.existsSync(expanded)) {
     fs.mkdirSync(expanded, { recursive: true })

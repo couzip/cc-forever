@@ -6,6 +6,7 @@
  * Uses LanceDB + Transformers.js for lightweight local embeddings
  */
 
+import * as path from 'node:path'
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
@@ -206,7 +207,7 @@ class CCForeverServer {
     const dataDir = getDataDir(this.config)
 
     const modelPath = this.config.embeddings?.path || 'Xenova/all-MiniLM-L6-v2'
-    const cacheDir = `${dataDir}/models`
+    const cacheDir = path.join(dataDir, 'models')
 
     this.embedder = new Embedder({
       modelPath,
@@ -219,7 +220,7 @@ class CCForeverServer {
     await this.embedder.initialize()
 
     this.vectorStore = new VectorStore({
-      dbPath: `${dataDir}/lancedb`,
+      dbPath: path.join(dataDir, 'lancedb'),
       tableName: 'memories',
     })
 
