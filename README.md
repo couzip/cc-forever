@@ -34,7 +34,7 @@ Never lose valuable conversations again. CC-Forever lets you save and retrieve p
 /plugin install cc-forever@cc-forever-marketplace
 ```
 
-Restart Claude Code after installation, then run `/cc-forever:setup` to configure.
+**⚠️ Restart Claude Code after installation**, then run `/cc-forever:setup` to configure.
 
 ## Setup
 
